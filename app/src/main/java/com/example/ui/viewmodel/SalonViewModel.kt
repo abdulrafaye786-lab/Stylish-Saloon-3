@@ -15,10 +15,16 @@ import java.util.*
 class SalonViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = SalonRepository(SalonDatabase.getInstance(application))
 
-    private val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-    private val calendar = Calendar.getInstance()
+    private val pktTimeZone = TimeZone.getTimeZone("Asia/Karachi")
+    private val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US).apply {
+        timeZone = pktTimeZone
+    }
 
-    private val _selectedDate = MutableStateFlow(dateFormat.format(calendar.time))
+    private fun getPktToday(): String {
+        return dateFormat.format(Calendar.getInstance(pktTimeZone).time)
+    }
+
+    private val _selectedDate = MutableStateFlow(getPktToday())
     val selectedDate: StateFlow<String> = _selectedDate.asStateFlow()
 
     val settings: StateFlow<SalonSettingsEntity> = repository.settingsFlow
@@ -56,6 +62,20 @@ class SalonViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             repository.ensureInitialData()
         }
+        // Background ticker to auto-transition date when Pakistan Timezone reaches midnight
+        viewModelScope.launch {
+            var lastPktDate = getPktToday()
+            while (true) {
+                kotlinx.coroutines.delay(10000)
+                val currentPktDate = getPktToday()
+                if (currentPktDate != lastPktDate) {
+                    if (_selectedDate.value == lastPktDate) {
+                        _selectedDate.value = currentPktDate
+                    }
+                    lastPktDate = currentPktDate
+                }
+            }
+        }
     }
 
     fun setSelectedDate(date: String) {
@@ -65,11 +85,11 @@ class SalonViewModel(application: Application) : AndroidViewModel(application) {
     fun navigateDate(offsetDays: Int) {
         try {
             val curDate = dateFormat.parse(_selectedDate.value) ?: Date()
-            val cal = Calendar.getInstance().apply { time = curDate }
+            val cal = Calendar.getInstance(pktTimeZone).apply { time = curDate }
             cal.add(Calendar.DAY_OF_YEAR, offsetDays)
             _selectedDate.value = dateFormat.format(cal.time)
         } catch (e: Exception) {
-            _selectedDate.value = dateFormat.format(Date())
+            _selectedDate.value = getPktToday()
         }
     }
 
@@ -96,7 +116,17 @@ class SalonViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun updateSettings(salonName: String, ownerName: String, currency: String, workingHours: String, theme: String, language: String) {
+    fun updateSettings(
+        salonName: String,
+        ownerName: String,
+        currency: String,
+        workingHours: String,
+        theme: String,
+        language: String,
+        supabaseUrl: String = settings.value.supabaseUrl,
+        supabaseKey: String = settings.value.supabaseKey,
+        isSupabaseSyncEnabled: Boolean = settings.value.isSupabaseSyncEnabled
+    ) {
         viewModelScope.launch {
             val symbol = when (currency.uppercase()) {
                 "USD" -> "$"
@@ -114,10 +144,21 @@ class SalonViewModel(application: Application) : AndroidViewModel(application) {
                 currencySymbol = symbol,
                 workingHours = workingHours,
                 appTheme = theme,
-                language = language
+                language = language,
+                supabaseUrl = supabaseUrl,
+                supabaseKey = supabaseKey,
+                isSupabaseSyncEnabled = isSupabaseSyncEnabled
             )
             repository.saveSettings(updated)
         }
+    }
+
+    suspend fun testSupabaseConnection(url: String, key: String): Result<String> {
+        return com.example.utils.SupabaseSyncManager.testConnection(url, key)
+    }
+
+    suspend fun syncAllDataToSupabase(): Result<Int> {
+        return repository.syncAllDataToSupabase()
     }
 
     fun saveEmployeeDailyEntry(

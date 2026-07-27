@@ -26,6 +26,9 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
 import com.example.data.local.DailyEntryEntity
 import com.example.data.local.EmployeeEntity
 import com.example.data.local.ExpenseEntity
@@ -47,10 +50,25 @@ fun HomeScreen(
     onProcessVoice: (String) -> Unit,
     onClearVoiceFeedback: () -> Unit
 ) {
+    val context = LocalContext.current
     var voiceInputText by remember { mutableStateOf("") }
     var showExpenseDialog by remember { mutableStateOf(false) }
 
     val focusManager = LocalFocusManager.current
+
+    val speechLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            val resultsList: java.util.ArrayList<String>? = result.data
+                ?.getStringArrayListExtra(android.speech.RecognizerIntent.EXTRA_RESULTS)
+            val spokenText: String? = resultsList?.firstOrNull()
+            if (!spokenText.isNullOrBlank()) {
+                voiceInputText = spokenText
+                onProcessVoice(spokenText)
+            }
+        }
+    }
 
     val totalCash = todayEntries.sumOf { it.cashEarnings }
     val totalOnline = todayEntries.sumOf { it.onlinePayments }
@@ -349,12 +367,34 @@ fun HomeScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Mic,
-                                contentDescription = "Voice Input",
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(24.dp)
-                            )
+                            IconButton(
+                                onClick = {
+                                    val intent = android.content.Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                                        putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL, android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                                        putExtra(
+                                            android.speech.RecognizerIntent.EXTRA_LANGUAGE,
+                                            if (settings.language == "UR") "ur-PK" else if (settings.language == "AR") "ar-SA" else "en-US"
+                                        )
+                                        putExtra(android.speech.RecognizerIntent.EXTRA_PROMPT, "Speak command (e.g., 'Ahmed 500 cash' or 'Chai 100')")
+                                    }
+                                    try {
+                                        speechLauncher.launch(intent)
+                                    } catch (e: Exception) {
+                                        android.widget.Toast.makeText(context, "Voice recognition not available on this device", android.widget.Toast.LENGTH_SHORT).show()
+                                    }
+                                },
+                                modifier = Modifier
+                                    .background(MaterialTheme.colorScheme.primaryContainer, CircleShape)
+                                    .size(40.dp)
+                                    .testTag("mic_voice_btn")
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Mic,
+                                    contentDescription = "Voice Input",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
                             OutlinedTextField(
                                 value = voiceInputText,
                                 onValueChange = { voiceInputText = it },

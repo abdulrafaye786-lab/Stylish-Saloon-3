@@ -1,6 +1,7 @@
 package com.example.data.repository
 
 import com.example.data.local.*
+import com.example.utils.SupabaseSyncManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
 import org.json.JSONArray
@@ -39,8 +40,22 @@ class SalonRepository(private val db: SalonDatabase) {
         }
     }
 
+    private suspend fun triggerSupabaseSync(action: suspend (url: String, key: String) -> Unit) {
+        val s = settingsDao.getSettings()
+        if (s != null && s.isSupabaseSyncEnabled && s.supabaseUrl.isNotBlank() && s.supabaseKey.isNotBlank()) {
+            try {
+                action(s.supabaseUrl, s.supabaseKey)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
     suspend fun saveSettings(settings: SalonSettingsEntity) {
         settingsDao.insertOrUpdateSettings(settings)
+        triggerSupabaseSync { url, key ->
+            SupabaseSyncManager.syncSettings(url, key, settings)
+        }
     }
 
     fun getEntriesForDate(date: String): Flow<List<DailyEntryEntity>> {
@@ -79,38 +94,83 @@ class SalonRepository(private val db: SalonDatabase) {
             updatedAt = System.currentTimeMillis()
         )
         dailyEntryDao.insertOrUpdateEntry(entry)
+        val finalEntry = if (entry.id == 0L) {
+            dailyEntryDao.getEntryForEmployeeAndDate(employeeId, date) ?: entry
+        } else {
+            entry
+        }
+
+        triggerSupabaseSync { url, key ->
+            SupabaseSyncManager.syncDailyEntry(url, key, finalEntry)
+        }
     }
 
     suspend fun addEmployee(name: String, role: String = "Barber", phone: String = ""): Long {
-        return employeeDao.insertEmployee(EmployeeEntity(name = name, role = role, phone = phone))
+        val emp = EmployeeEntity(name = name, role = role, phone = phone)
+        val id = employeeDao.insertEmployee(emp)
+        val finalEmp = emp.copy(id = id)
+
+        triggerSupabaseSync { url, key ->
+            SupabaseSyncManager.syncEmployee(url, key, finalEmp)
+        }
+        return id
     }
 
     suspend fun updateEmployee(employee: EmployeeEntity) {
         employeeDao.updateEmployee(employee)
+        triggerSupabaseSync { url, key ->
+            SupabaseSyncManager.syncEmployee(url, key, employee)
+        }
     }
 
     suspend fun deleteEmployee(employee: EmployeeEntity) {
         dailyEntryDao.deleteEntriesForEmployee(employee.id)
         employeeDao.deleteEmployee(employee)
+        triggerSupabaseSync { url, key ->
+            // Mark inactive or update state in Supabase
+            SupabaseSyncManager.syncEmployee(url, key, employee.copy(isEnabled = false))
+        }
     }
 
     suspend fun addExpense(date: String, name: String, category: String, amount: Double, notes: String = ""): Long {
-        return expenseDao.insertExpense(
-            ExpenseEntity(
-                date = date,
-                name = name,
-                category = category,
-                amount = amount,
-                notes = notes
-            )
+        val exp = ExpenseEntity(
+            date = date,
+            name = name,
+            category = category,
+            amount = amount,
+            notes = notes
         )
+        val id = expenseDao.insertExpense(exp)
+        val finalExp = exp.copy(id = id)
+
+        triggerSupabaseSync { url, key ->
+            SupabaseSyncManager.syncExpense(url, key, finalExp)
+        }
+        return id
     }
 
     suspend fun deleteExpense(expense: ExpenseEntity) {
         expenseDao.deleteExpense(expense)
     }
 
+    suspend fun syncAllDataToSupabase(): Result<Int> {
+        val s = settingsDao.getSettings() ?: return Result.failure(Exception("Settings not loaded"))
+        val employees = allEmployeesFlow.firstOrNull() ?: emptyList()
+        val entries = allDailyEntriesFlow.firstOrNull() ?: emptyList()
+        val expenses = allExpensesFlow.firstOrNull() ?: emptyList()
+
+        return SupabaseSyncManager.syncAllDataToSupabase(
+            supabaseUrl = s.supabaseUrl,
+            supabaseKey = s.supabaseKey,
+            settings = s,
+            employees = employees,
+            dailyEntries = entries,
+            expenses = expenses
+        )
+    }
+
     suspend fun exportDataAsJson(): String {
+
         val json = JSONObject()
         
         val settings = settingsDao.getSettings()

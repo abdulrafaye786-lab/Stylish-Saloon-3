@@ -14,4 +14,7 @@ data class DailyEntryEntity(
     val onlinePayments: Double = 0.0,
     val amountBreakdown: String = "",
     val updatedAt: Long = System.currentTimeMillis()
-)
+) {
+    val totalIncome: Double
+        get() = cashEarnings + onlinePayments
+}

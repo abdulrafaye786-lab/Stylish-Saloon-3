@@ -15,5 +15,8 @@ data class SalonSettingsEntity(
     val appTheme: String = "SYSTEM", // SYSTEM, LIGHT, DARK
     val language: String = "EN", // EN, UR, AR
     val isSetupCompleted: Boolean = false,
-    val userRole: String = "OWNER"
+    val userRole: String = "OWNER",
+    val supabaseUrl: String = "",
+    val supabaseKey: String = "",
+    val isSupabaseSyncEnabled: Boolean = true
 )

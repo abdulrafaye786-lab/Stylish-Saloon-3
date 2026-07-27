@@ -7,11 +7,11 @@
 -- 1. Create Salon Settings Table
 CREATE TABLE IF NOT EXISTS public.salon_settings (
     id BIGINT PRIMARY KEY DEFAULT 1,
-    salon_name TEXT NOT NULL DEFAULT 'Stylish Salon',
+    salon_name TEXT NOT NULL DEFAULT 'Crown Salon',
     owner_name TEXT NOT NULL DEFAULT 'Owner',
     currency_symbol TEXT NOT NULL DEFAULT 'PKR',
-    working_hours TEXT NOT NULL DEFAULT '9:00 AM - 10:00 PM',
-    theme TEXT NOT NULL DEFAULT 'LIGHT',
+    working_hours TEXT NOT NULL DEFAULT '09:00 AM - 09:00 PM',
+    theme TEXT NOT NULL DEFAULT 'SYSTEM',
     language TEXT NOT NULL DEFAULT 'URDU',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -19,11 +19,12 @@ CREATE TABLE IF NOT EXISTS public.salon_settings (
 
 -- Enable RLS
 ALTER TABLE public.salon_settings ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow public full access salon_settings" ON public.salon_settings;
 CREATE POLICY "Allow public full access salon_settings" ON public.salon_settings FOR ALL USING (true);
 
 -- Insert Default Row if empty
 INSERT INTO public.salon_settings (id, salon_name, owner_name, currency_symbol, working_hours, theme, language)
-VALUES (1, 'Stylish Salon', 'Salon Owner', 'PKR', '9:00 AM - 10:00 PM', 'LIGHT', 'URDU')
+VALUES (1, 'Crown Salon', 'Salon Owner', 'PKR', '09:00 AM - 09:00 PM', 'SYSTEM', 'URDU')
 ON CONFLICT (id) DO NOTHING;
 
 
@@ -39,6 +40,7 @@ CREATE TABLE IF NOT EXISTS public.employees (
 
 -- Enable RLS
 ALTER TABLE public.employees ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow public full access employees" ON public.employees;
 CREATE POLICY "Allow public full access employees" ON public.employees FOR ALL USING (true);
 
 
@@ -58,7 +60,11 @@ CREATE TABLE IF NOT EXISTS public.daily_entries (
 
 -- Enable RLS
 ALTER TABLE public.daily_entries ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow public full access daily_entries" ON public.daily_entries;
 CREATE POLICY "Allow public full access daily_entries" ON public.daily_entries FOR ALL USING (true);
+
+CREATE INDEX IF NOT EXISTS idx_daily_entries_date ON public.daily_entries(entry_date);
+CREATE INDEX IF NOT EXISTS idx_daily_entries_emp ON public.daily_entries(employee_id);
 
 
 -- 4. Create Expenses Table
@@ -74,15 +80,48 @@ CREATE TABLE IF NOT EXISTS public.expenses (
 
 -- Enable RLS
 ALTER TABLE public.expenses ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow public full access expenses" ON public.expenses;
 CREATE POLICY "Allow public full access expenses" ON public.expenses FOR ALL USING (true);
+
+CREATE INDEX IF NOT EXISTS idx_expenses_date ON public.expenses(expense_date);
+
+
+-- ============================================================
+-- ANALYTICS & REPORTING VIEWS (DAILY, MONTHLY, YEARLY)
+-- ============================================================
+
+-- View: Daily Salon Summary (Income vs Expenses vs Net Profit)
+CREATE OR REPLACE VIEW public.v_daily_salon_summary AS
+SELECT 
+    d.entry_date AS summary_date,
+    COALESCE(SUM(d.total_income), 0) AS total_income,
+    COALESCE(SUM(d.cash_earnings), 0) AS total_cash,
+    COALESCE(SUM(d.online_payments), 0) AS total_online,
+    COALESCE((SELECT SUM(e.amount) FROM public.expenses e WHERE e.expense_date = d.entry_date), 0) AS total_expenses,
+    COALESCE(SUM(d.total_income), 0) - COALESCE((SELECT SUM(e.amount) FROM public.expenses e WHERE e.expense_date = d.entry_date), 0) AS net_profit
+FROM public.daily_entries d
+GROUP BY d.entry_date;
+
+-- View: Employee Monthly Salary & Earnings Summary
+CREATE OR REPLACE VIEW public.v_employee_monthly_summary AS
+SELECT 
+    d.employee_id,
+    d.employee_name,
+    SUBSTRING(d.entry_date FROM 1 FOR 7) AS month_period, -- YYYY-MM
+    COUNT(DISTINCT d.entry_date) AS days_worked,
+    SUM(d.cash_earnings) AS total_cash,
+    SUM(d.online_payments) AS total_online,
+    SUM(d.total_income) AS total_earnings
+FROM public.daily_entries d
+GROUP BY d.employee_id, d.employee_name, SUBSTRING(d.entry_date FROM 1 FOR 7);
 
 
 -- ============================================================
 -- API ACCESS & API KEY INSTRUCTIONS FOR SUPABASE
 -- ============================================================
 -- 1. Go to your Supabase Project Settings -> API.
--- 2. Copy your "Project URL" and "anon / public Key" or "service_role Key".
--- 3. In AI Studio Secrets or your .env file, specify:
---    SUPABASE_URL=https://your-project.supabase.co
---    SUPABASE_KEY=your-anon-or-service-role-key
+-- 2. Copy your "Project URL" (e.g., https://xyz.supabase.co) and "anon / public Key".
+-- 3. Enter them in the app's Settings -> Supabase Backend Configuration.
+-- 4. All employees, daily earnings, expenses, and settings will sync automatically!
 -- ============================================================
+

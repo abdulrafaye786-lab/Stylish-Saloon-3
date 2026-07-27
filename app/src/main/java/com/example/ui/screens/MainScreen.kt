@@ -169,9 +169,11 @@ fun MainScreen(viewModel: SalonViewModel) {
 
                         NavTab.SETTINGS -> SettingsScreen(
                             settings = settings,
-                            onUpdateSettings = { sName, oName, curr, hrs, thm, lng ->
-                                viewModel.updateSettings(sName, oName, curr, hrs, thm, lng)
+                            onUpdateSettings = { sName, oName, curr, hrs, thm, lng, sUrl, sKey, sEnabled ->
+                                viewModel.updateSettings(sName, oName, curr, hrs, thm, lng, sUrl, sKey, sEnabled)
                             },
+                            onTestSupabaseConnection = { url, key -> viewModel.testSupabaseConnection(url, key) },
+                            onSyncAllToSupabase = { viewModel.syncAllDataToSupabase() },
                             onExportBackup = { viewModel.exportBackupJson() },
                             onRestoreBackup = { json -> viewModel.restoreBackupJson(json) }
                         )
