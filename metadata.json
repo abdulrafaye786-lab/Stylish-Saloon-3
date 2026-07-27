@@ -1,0 +1,8 @@
+{
+  "name": "Remix: Salon Register",
+  "description": "Production-ready Android Salon \u0026 Barbershop Register for daily earnings, online payments, expenses, voice entry, and analytics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stylish Salon - Register & Management App</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Nastaliq+Urdu:wght@400;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cream: '#FAF6EE',
+                        gold: '#D97706',
+                        darkGold: '#B45309',
+                        salonBg: '#FFFDF9',
+                        darkText: '#1E293B',
+                        cardBg: '#FFFFFF',
+                    },
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        urdu: ['Noto Nastaliq Urdu', 'Plus Jakarta Sans', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #FAF6EE;
+            color: #1E293B;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .urdu-font {
+            font-family: 'Noto Nastaliq Urdu', serif;
+            line-height: 1.8;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(217, 119, 6, 0.15);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between antialiased">
+
+    <!-- Top Navigation Header -->
+    <header class="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-amber-100 shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold text-xl shadow-md">
+                    <i class="fa-solid fa-scissors"></i>
+                </div>
+                <div>
+                    <h1 id="appTitle" class="font-bold text-lg text-slate-800 leading-tight">Stylish Salon</h1>
+                    <p id="appSubtitle" class="text-xs text-amber-600 font-medium">Daily Register & Management</p>
+                </div>
+            </div>
+
+            <!-- Language Switcher & Download Button -->
+            <div class="flex items-center gap-3">
+                <select id="langSelect" onchange="changeLanguage(this.value)" class="bg-amber-50 text-amber-900 border border-amber-200 text-xs font-semibold rounded-lg px-3 py-2 outline-none cursor-pointer hover:bg-amber-100 transition">
+                    <option value="en">English 🇬🇧</option>
+                    <option value="ur" selected>اردو (Urdu) 🇵🇰</option>
+                    <option value="ar">العربية (Arabic) 🇸🇦</option>
+                </select>
+
+                <a href="/app-debug.apk" download class="hidden sm:flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-md transition transform active:scale-95">
+                    <i class="fa-solid fa-download"></i>
+                    <span id="downloadApkBtn">Download APK</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-6xl mx-auto px-4 py-6 w-full flex-1">
+
+        <!-- Hero Announcement / APK Banner -->
+        <div class="bg-gradient-to-r from-amber-600 to-amber-700 rounded-3xl p-6 md:p-8 text-white shadow-xl mb-8 relative overflow-hidden">
+            <div class="absolute -right-10 -bottom-10 opacity-10 text-9xl text-white pointer-events-none">
+                <i class="fa-solid fa-scissors"></i>
+            </div>
+            <div class="relative z-10 max-w-2xl">
+                <span class="inline-block bg-amber-500/30 text-amber-100 text-xs font-semibold px-3 py-1 rounded-full mb-3 border border-amber-400/30">
+                    <i class="fa-solid fa-mobile-screen mr-1"></i> Native Android Application
+                </span>
+                <h2 id="heroHeading" class="text-2xl md:text-3xl font-extrabold mb-2 leading-snug">
+                    Stylist Income & Daily Expense Register
+                </h2>
+                <p id="heroText" class="text-amber-100 text-sm mb-6 leading-relaxed">
+                    Easily add multiple income entries (e.g., 200, 400, 700) for each employee, calculate daily earnings in one click, track tea/utility expenses, and manage your salon in Urdu, English, or Arabic.
+                </p>
+                <div class="flex flex-wrap items-center gap-3">
+                    <a href="/app-debug.apk" download class="bg-white text-amber-800 hover:bg-amber-50 font-bold px-5 py-3 rounded-2xl shadow-lg transition flex items-center gap-2 text-sm">
+                        <i class="fa-solid fa-file-arrow-down text-amber-600 text-lg"></i>
+                        <span id="heroDownloadBtn">Download Android App (.APK)</span>
+                    </a>
+                    <a href="#supabaseSection" class="bg-amber-800/60 hover:bg-amber-800 text-white border border-amber-400/30 font-semibold px-4 py-3 rounded-2xl transition text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-database"></i>
+                        <span id="heroDatabaseBtn">Supabase SQL Backend</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="flex border-b border-amber-200 mb-6 gap-2">
+            <button id="tabDemo" onclick="switchTab('demo')" class="px-5 py-3 font-bold text-sm border-b-2 border-amber-600 text-amber-800 flex items-center gap-2 transition">
+                <i class="fa-solid fa-calculator"></i>
+                <span id="tabDemoLabel">Interactive Calculator</span>
+            </button>
+            <button id="tabDatabase" onclick="switchTab('database')" class="px-5 py-3 font-bold text-sm text-slate-500 hover:text-amber-700 flex items-center gap-2 transition">
+                <i class="fa-solid fa-database"></i>
+                <span id="tabDatabaseLabel">Supabase Backend SQL</span>
+            </button>
+        </div>
+
+        <!-- TAB 1: INTERACTIVE DEMO / CALCULATOR SIMULATOR -->
+        <div id="viewDemo" class="space-y-6">
+            
+            <!-- Employee Selection & Multi-Amount Entry -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                
+                <!-- Left Panel: Employee Multi-Amount Calculator -->
+                <div class="md:col-span-2 glass-card rounded-3xl p-6 shadow-sm border border-amber-200">
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-user-gear text-amber-600 text-lg"></i>
+                            <h3 id="employeeCalcTitle" class="font-bold text-slate-800 text-lg">Employee Earnings Calculator</h3>
+                        </div>
+                        <span class="text-xs bg-amber-100 text-amber-800 font-bold px-2.5 py-1 rounded-lg">
+                            <i class="fa-solid fa-coins mr-1"></i> <span id="currencyBadge">PKR</span>
+                        </span>
+                    </div>
+
+                    <!-- Selected Employee Tabs -->
+                    <div class="flex gap-2 overflow-x-auto pb-2 mb-4" id="employeeTabs">
+                        <!-- Rendered dynamically -->
+                    </div>
+
+                    <!-- Multi Amount Form -->
+                    <div class="bg-amber-50/50 rounded-2xl p-4 border border-amber-100 mb-4">
+                        <label id="addAmountLabel" class="block text-xs font-bold text-amber-800 mb-2">
+                            Add Multiple Amounts for Employee (e.g. 200, 400, 700)
+                        </label>
+                        <div class="flex gap-2 mb-3">
+                            <div class="relative flex-1">
+                                <span class="absolute left-3 top-2.5 text-amber-600 font-bold text-sm">Rs.</span>
+                                <input type="number" id="amountInput" placeholder="200" class="w-full pl-10 pr-3 py-2.5 rounded-xl border border-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-500 font-semibold text-slate-800 bg-white">
+                            </div>
+                            <button onclick="addAmountToList()" class="bg-amber-600 hover:bg-amber-700 text-white font-bold px-5 py-2.5 rounded-xl transition flex items-center gap-1 text-sm shadow">
+                                <i class="fa-solid fa-plus"></i>
+                                <span id="addBtnLabel">Add</span>
+                            </button>
+                        </div>
+
+                        <!-- Quick Presets -->
+                        <div class="flex flex-wrap gap-2 items-center">
+                            <span id="quickAddLabel" class="text-xs text-slate-500 font-semibold">Quick Add:</span>
+                            <button onclick="quickAdd(200)" class="text-xs font-bold bg-white text-amber-800 border border-amber-200 px-2.5 py-1 rounded-lg hover:bg-amber-100">+200</button>
+                            <button onclick="quickAdd(400)" class="text-xs font-bold bg-white text-amber-800 border border-amber-200 px-2.5 py-1 rounded-lg hover:bg-amber-100">+400</button>
+                            <button onclick="quickAdd(500)" class="text-xs font-bold bg-white text-amber-800 border border-amber-200 px-2.5 py-1 rounded-lg hover:bg-amber-100">+500</button>
+                            <button onclick="quickAdd(700)" class="text-xs font-bold bg-white text-amber-800 border border-amber-200 px-2.5 py-1 rounded-lg hover:bg-amber-100">+700</button>
+                            <button onclick="quickAdd(1000)" class="text-xs font-bold bg-white text-amber-800 border border-amber-200 px-2.5 py-1 rounded-lg hover:bg-amber-100">+1000</button>
+                        </div>
+                    </div>
+
+                    <!-- Added Amounts Breakdown List -->
+                    <div class="mb-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <span id="addedBreakdownLabel" class="text-xs font-bold text-slate-600">Added Amounts List:</span>
+                            <button onclick="clearAmounts()" id="clearBtn" class="text-xs text-rose-600 font-bold hover:underline">Clear All</button>
+                        </div>
+                        <div id="amountsChipContainer" class="flex flex-wrap gap-2 min-h-[44px] p-2 bg-slate-50 rounded-xl border border-slate-200">
+                            <!-- Rendered Chips -->
+                        </div>
+                    </div>
+
+                    <!-- Action: Calculate Total Income Button -->
+                    <button onclick="calculateTotalIncome()" class="w-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-bold py-3.5 px-4 rounded-2xl shadow-md transition flex items-center justify-center gap-2 text-base">
+                        <i class="fa-solid fa-calculator"></i>
+                        <span id="calcTotalBtn">Calculate Total Income</span>
+                    </button>
+
+                    <!-- Calculated Feedback Output -->
+                    <div id="resultBox" class="hidden mt-4 bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <i class="fa-solid fa-circle-check text-emerald-600 text-xl"></i>
+                            <div>
+                                <p id="resultText" class="font-extrabold text-emerald-900 text-base">Total Income Calculated</p>
+                                <p id="resultBreakdown" class="text-xs text-emerald-700 font-medium">Breakdown: 200 + 400 + 700</p>
+                            </div>
+                        </div>
+                        <span id="resultTotalValue" class="text-xl font-extrabold text-emerald-800">Rs. 1300</span>
+                    </div>
+
+                </div>
+
+                <!-- Right Panel: Salon Summary & Expenses -->
+                <div class="space-y-6">
+                    
+                    <!-- Today Summary Card -->
+                    <div class="glass-card rounded-3xl p-6 shadow-sm border border-amber-200">
+                        <h3 id="summaryTitle" class="font-bold text-slate-800 text-base mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-line text-amber-600"></i> Today's Register Summary
+                        </h3>
+
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center text-sm py-2 border-b border-slate-100">
+                                <span id="totalIncomeLabel" class="text-slate-600 font-medium">Total Stylist Earnings:</span>
+                                <span id="summaryTotalIncome" class="font-bold text-emerald-600">Rs. 3200</span>
+                            </div>
+                            <div class="flex justify-between items-center text-sm py-2 border-b border-slate-100">
+                                <span id="totalExpensesLabel" class="text-slate-600 font-medium">Daily Expenses (Tea/Rent):</span>
+                                <span id="summaryTotalExpenses" class="font-bold text-rose-600">Rs. 350</span>
+                            </div>
+                            <div class="flex justify-between items-center text-base py-2 font-extrabold">
+                                <span id="netProfitLabel" class="text-slate-800">Net Salon Profit:</span>
+                                <span id="summaryNetProfit" class="text-amber-700 text-lg">Rs. 2850</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Daily Expense Quick Entry -->
+                    <div class="glass-card rounded-3xl p-6 shadow-sm border border-amber-200">
+                        <h3 id="expenseTitle" class="font-bold text-slate-800 text-base mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-mug-hot text-amber-600"></i> Add Daily Expense
+                        </h3>
+                        <div class="space-y-2">
+                            <input type="text" id="expenseName" placeholder="Expense (e.g. Tea / چائے)" class="w-full px-3 py-2 text-xs rounded-xl border border-amber-200 focus:outline-none focus:ring-1 focus:ring-amber-500 bg-white">
+                            <input type="number" id="expenseAmount" placeholder="Amount (e.g. 150)" class="w-full px-3 py-2 text-xs rounded-xl border border-amber-200 focus:outline-none focus:ring-1 focus:ring-amber-500 bg-white">
+                            <button onclick="addExpenseSim()" class="w-full bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold py-2 rounded-xl transition">
+                                <span id="addExpenseBtn">Save Expense</span>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- TAB 2: SUPABASE DATABASE BACKEND CODE & INSTRUCTIONS -->
+        <div id="viewDatabase" class="hidden space-y-6">
+            <div id="supabaseSection" class="glass-card rounded-3xl p-6 shadow-sm border border-amber-200">
+                <div class="flex flex-wrap justify-between items-center mb-4 gap-3">
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2">
+                            <i class="fa-solid fa-database text-amber-600"></i> Supabase SQL Schema Script
+                        </h3>
+                        <p class="text-xs text-slate-500">Run this SQL code directly in your Supabase SQL Editor to create tables for Salon Settings, Employees, Daily Entries & Expenses.</p>
+                    </div>
+                    <button onclick="copySqlCode()" class="bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition flex items-center gap-2 shadow">
+                        <i class="fa-solid fa-copy"></i>
+                        <span id="copySqlBtnText">Copy SQL Code</span>
+                    </button>
+                </div>
+
+                <div class="relative bg-slate-900 text-slate-100 rounded-2xl p-4 overflow-x-auto text-xs font-mono leading-relaxed border border-slate-800 max-h-[450px]">
+                    <pre id="sqlCodeBlock">-- ============================================================
+-- SUPABASE SQL DATABASE SCHEMA FOR STYLISH SALON APPLICATION
+-- ============================================================
+
+-- 1. Salon Settings Table
+CREATE TABLE IF NOT EXISTS public.salon_settings (
+    id BIGINT PRIMARY KEY DEFAULT 1,
+    salon_name TEXT NOT NULL DEFAULT 'Stylish Salon',
+    owner_name TEXT NOT NULL DEFAULT 'Owner',
+    currency_symbol TEXT NOT NULL DEFAULT 'PKR',
+    working_hours TEXT NOT NULL DEFAULT '9:00 AM - 10:00 PM',
+    theme TEXT NOT NULL DEFAULT 'LIGHT',
+    language TEXT NOT NULL DEFAULT 'URDU',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 2. Employees Table
+CREATE TABLE IF NOT EXISTS public.employees (
+    id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    name TEXT NOT NULL,
+    role TEXT NOT NULL DEFAULT 'Stylist',
+    phone TEXT DEFAULT '',
+    is_active BOOLEAN NOT NULL DEFAULT TRUE
+);
+
+-- 3. Daily Entries Table (With Multiple Amounts Breakdown)
+CREATE TABLE IF NOT EXISTS public.daily_entries (
+    id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    employee_id BIGINT NOT NULL REFERENCES public.employees(id) ON DELETE CASCADE,
+    employee_name TEXT NOT NULL,
+    entry_date TEXT NOT NULL,
+    cash_earnings DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+    online_payments DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+    total_income DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+    amount_breakdown TEXT DEFAULT '',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 4. Expenses Table
+CREATE TABLE IF NOT EXISTS public.expenses (
+    id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    name TEXT NOT NULL,
+    category TEXT NOT NULL DEFAULT 'Tea',
+    amount DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+    expense_date TEXT NOT NULL,
+    notes TEXT DEFAULT ''
+);</pre>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-amber-100 py-4 text-center text-xs text-slate-500 font-medium">
+        <p>MADE BY AR WORDS | Stylish Salon Daily Register App</p>
+    </footer>
+
+    <!-- Interactive Script -->
+    <script>
+        const employees = [
+            { id: 1, name: 'Ali (علی)', amounts: [200, 400, 700] },
+            { id: 2, name: 'Raza (رضا)', amounts: [300, 500] },
+            { id: 3, name: 'Usman (عثمان)', amounts: [1000] }
+        ];
+
+        let activeEmpIndex = 0;
+        let currentExpenses = 350;
+
+        const translations = {
+            en: {
+                title: "Stylish Salon",
+                subtitle: "Daily Register & Management",
+                downloadApk: "Download APK",
+                heroHeading: "Stylist Income & Daily Expense Register",
+                heroText: "Easily add multiple income entries (e.g., 200, 400, 700) for each employee, calculate daily earnings in one click, track tea/utility expenses, and manage your salon in Urdu, English, or Arabic.",
+                heroDownloadBtn: "Download Android App (.APK)",
+                heroDatabaseBtn: "Supabase SQL Backend",
+                tabDemo: "Interactive Calculator",
+                tabDatabase: "Supabase Backend SQL",
+                employeeCalcTitle: "Employee Earnings Calculator",
+                addAmountLabel: "Add Multiple Amounts for Employee (e.g. 200, 400, 700)",
+                addBtn: "Add",
+                quickAdd: "Quick Add:",
+                addedBreakdownLabel: "Added Amounts List:",
+                clearBtn: "Clear All",
+                calcTotalBtn: "Calculate Total Income",
+                summaryTitle: "Today's Register Summary",
+                totalIncomeLabel: "Total Stylist Earnings:",
+                totalExpensesLabel: "Daily Expenses (Tea/Rent):",
+                netProfitLabel: "Net Salon Profit:",
+                expenseTitle: "Add Daily Expense",
+                addExpenseBtn: "Save Expense",
+            },
+            ur: {
+                title: "اسٹائلش سیلون",
+                subtitle: "روزانہ کا حساب اور روزنامچہ",
+                downloadApk: "ایپ ڈاؤن لوڈ کریں",
+                heroHeading: "ملازمین کی آمدن اور روزانہ کے اخراجات کا حساب",
+                heroText: "ہر ملازم کے اکاؤنٹ میں الگ الگ رقمیں (مثلاً 200، 400، 700) شامل کریں، ایک کلک پر کل آمدن کا حساب لگائیں اور چائے یا دیگر اخراجات کا ریکارڈ رکھیں۔",
+                heroDownloadBtn: "اینڈرائیڈ ایپ ڈاؤن لوڈ کریں (.APK)",
+                heroDatabaseBtn: "سُپابیس ڈیٹا بیس (SQL)",
+                tabDemo: "حساب کتاب کیلکولیٹر",
+                tabDatabase: "سُپابیس ڈیٹا بیس کوڈ",
+                employeeCalcTitle: "ملازم کی آمدن کا حساب",
+                addAmountLabel: "ملازم کی رقم درج کریں (مثلاً 200، 400، 700)",
+                addBtn: "شامل کریں",
+                quickAdd: "جلدی شامل کریں:",
+                addedBreakdownLabel: "شامل کردہ رقمیں:",
+                clearBtn: "تمام صاف کریں",
+                calcTotalBtn: "کل آمدن معلوم کریں",
+                summaryTitle: "آج کا کل حساب کتاب",
+                totalIncomeLabel: "تمام ملازمین کی کل آمدن:",
+                totalExpensesLabel: "روزانہ کے اخراجات (چائے وغیرہ):",
+                netProfitLabel: "خالص منافع:",
+                expenseTitle: "روزانہ کا خرچہ درج کریں",
+                addExpenseBtn: "خرچہ محفوظ کریں",
+            },
+            ar: {
+                title: "صالون ستايلش",
+                subtitle: "السجل اليومي وإدارة الصالون",
+                downloadApk: "تحميل التطبيق",
+                heroHeading: "إيرادات الموظفين والمصروفات اليومية",
+                heroText: "قم بإضافة مبالغ متعددة لكل موظف (مثل 200، 400، 700) وحساب الإجمالي بنقرة واحدة مع تتبع المصاريف اليومية.",
+                heroDownloadBtn: "تحميل تطبيق أندرويد (.APK)",
+                heroDatabaseBtn: "قاعدة بيانات Supabase SQL",
+                tabDemo: "حاسبة الدخل",
+                tabDatabase: "كود قاعدة البيانات",
+                employeeCalcTitle: "حاسبة أرباح الموظف",
+                addAmountLabel: "أدخل مبالغ متعددة للموظف (مثلاً 200، 400، 700)",
+                addBtn: "إضافة",
+                quickAdd: "إضافة سريعة:",
+                addedBreakdownLabel: "المبالغ المضافة:",
+                clearBtn: "مسح الكل",
+                calcTotalBtn: "حساب إجمالي الدخل",
+                summaryTitle: "ملخص الحساب اليومي",
+                totalIncomeLabel: "إجمالي أرباح الموظفين:",
+                totalExpensesLabel: "المصاريف اليومية (الشاي/الإيجار):",
+                netProfitLabel: "صافي الربح:",
+                expenseTitle: "إضافة مصروف يومي",
+                addExpenseBtn: "حفظ المصروف",
+            }
+        };
+
+        function renderEmployees() {
+            const tabs = document.getElementById('employeeTabs');
+            tabs.innerHTML = employees.map((emp, idx) => `
+                <button onclick="selectEmployee(${idx})" class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 border ${idx === activeEmpIndex ? 'bg-amber-600 text-white border-amber-600 shadow' : 'bg-white text-slate-700 border-amber-200 hover:bg-amber-50'}">
+                    <i class="fa-solid fa-user"></i> ${emp.name}
+                </button>
+            `).join('');
+            renderAmountsChips();
+        }
+
+        function selectEmployee(index) {
+            activeEmpIndex = index;
+            document.getElementById('resultBox').classList.add('hidden');
+            renderEmployees();
+        }
+
+        function renderAmountsChips() {
+            const container = document.getElementById('amountsChipContainer');
+            const emp = employees[activeEmpIndex];
+            if (emp.amounts.length === 0) {
+                container.innerHTML = `<span class="text-xs text-slate-400 italic p-1">No amounts added yet</span>`;
+                return;
+            }
+            container.innerHTML = emp.amounts.map((amt, i) => `
+                <span class="inline-flex items-center gap-1.5 bg-amber-100 text-amber-900 border border-amber-300 text-xs font-extrabold px-3 py-1 rounded-xl shadow-sm">
+                    Rs. ${amt}
+                    <button onclick="removeAmount(${i})" class="text-amber-700 hover:text-rose-600 ml-1"><i class="fa-solid fa-xmark"></i></button>
+                </span>
+            `).join('');
+        }
+
+        function addAmountToList() {
+            const input = document.getElementById('amountInput');
+            const val = parseFloat(input.value);
+            if (val && val > 0) {
+                employees[activeEmpIndex].amounts.push(val);
+                input.value = '';
+                renderAmountsChips();
+            }
+        }
+
+        function quickAdd(val) {
+            employees[activeEmpIndex].amounts.push(val);
+            renderAmountsChips();
+        }
+
+        function removeAmount(idx) {
+            employees[activeEmpIndex].amounts.splice(idx, 1);
+            renderAmountsChips();
+        }
+
+        function clearAmounts() {
+            employees[activeEmpIndex].amounts = [];
+            renderAmountsChips();
+            document.getElementById('resultBox').classList.add('hidden');
+        }
+
+        function calculateTotalIncome() {
+            const emp = employees[activeEmpIndex];
+            const sum = emp.amounts.reduce((a, b) => a + b, 0);
+            
+            document.getElementById('resultBox').classList.remove('hidden');
+            document.getElementById('resultText').innerText = `${emp.name}: Total Income Calculated`;
+            document.getElementById('resultBreakdown').innerText = `Breakdown: ${emp.amounts.join(' + ') || '0'}`;
+            document.getElementById('resultTotalValue').innerText = `Rs. ${sum}`;
+
+            updateOverallSummary();
+        }
+
+        function updateOverallSummary() {
+            let grandTotal = 0;
+            employees.forEach(e => {
+                grandTotal += e.amounts.reduce((a, b) => a + b, 0);
+            });
+
+            document.getElementById('summaryTotalIncome').innerText = `Rs. ${grandTotal}`;
+            document.getElementById('summaryTotalExpenses').innerText = `Rs. ${currentExpenses}`;
+            document.getElementById('summaryNetProfit').innerText = `Rs. ${Math.max(0, grandTotal - currentExpenses)}`;
+        }
+
+        function addExpenseSim() {
+            const name = document.getElementById('expenseName').value;
+            const amt = parseFloat(document.getElementById('expenseAmount').value);
+            if (amt && amt > 0) {
+                currentExpenses += amt;
+                document.getElementById('expenseName').value = '';
+                document.getElementById('expenseAmount').value = '';
+                updateOverallSummary();
+                alert(`Added Expense: ${name || 'Expense'} (Rs. ${amt})`);
+            }
+        }
+
+        function switchTab(tab) {
+            if (tab === 'demo') {
+                document.getElementById('viewDemo').classList.remove('hidden');
+                document.getElementById('viewDatabase').classList.add('hidden');
+                document.getElementById('tabDemo').className = 'px-5 py-3 font-bold text-sm border-b-2 border-amber-600 text-amber-800 flex items-center gap-2 transition';
+                document.getElementById('tabDatabase').className = 'px-5 py-3 font-bold text-sm text-slate-500 hover:text-amber-700 flex items-center gap-2 transition';
+            } else {
+                document.getElementById('viewDemo').classList.add('hidden');
+                document.getElementById('viewDatabase').classList.remove('hidden');
+                document.getElementById('tabDatabase').className = 'px-5 py-3 font-bold text-sm border-b-2 border-amber-600 text-amber-800 flex items-center gap-2 transition';
+                document.getElementById('tabDemo').className = 'px-5 py-3 font-bold text-sm text-slate-500 hover:text-amber-700 flex items-center gap-2 transition';
+            }
+        }
+
+        function changeLanguage(langKey) {
+            const t = translations[langKey] || translations.en;
+            if (langKey === 'ur' || langKey === 'ar') {
+                document.body.dir = 'rtl';
+                if (langKey === 'ur') document.body.classList.add('urdu-font');
+            } else {
+                document.body.dir = 'ltr';
+                document.body.classList.remove('urdu-font');
+            }
+
+            document.getElementById('appTitle').innerText = t.title;
+            document.getElementById('appSubtitle').innerText = t.subtitle;
+            document.getElementById('downloadApkBtn').innerText = t.downloadApk;
+            document.getElementById('heroHeading').innerText = t.heroHeading;
+            document.getElementById('heroText').innerText = t.heroText;
+            document.getElementById('heroDownloadBtn').innerText = t.heroDownloadBtn;
+            document.getElementById('heroDatabaseBtn').innerText = t.heroDatabaseBtn;
+            document.getElementById('tabDemoLabel').innerText = t.tabDemo;
+            document.getElementById('tabDatabaseLabel').innerText = t.tabDatabase;
+            document.getElementById('employeeCalcTitle').innerText = t.employeeCalcTitle;
+            document.getElementById('addAmountLabel').innerText = t.addAmountLabel;
+            document.getElementById('addBtnLabel').innerText = t.addBtn;
+            document.getElementById('quickAddLabel').innerText = t.quickAdd;
+            document.getElementById('addedBreakdownLabel').innerText = t.addedBreakdownLabel;
+            document.getElementById('clearBtn').innerText = t.clearBtn;
+            document.getElementById('calcTotalBtn').innerText = t.calcTotalBtn;
+            document.getElementById('summaryTitle').innerText = t.summaryTitle;
+            document.getElementById('totalIncomeLabel').innerText = t.totalIncomeLabel;
+            document.getElementById('totalExpensesLabel').innerText = t.totalExpensesLabel;
+            document.getElementById('netProfitLabel').innerText = t.netProfitLabel;
+            document.getElementById('expenseTitle').innerText = t.expenseTitle;
+            document.getElementById('addExpenseBtn').innerText = t.addExpenseBtn;
+        }
+
+        function copySqlCode() {
+            const sql = document.getElementById('sqlCodeBlock').innerText;
+            navigator.clipboard.writeText(sql).then(() => {
+                const btn = document.getElementById('copySqlBtnText');
+                btn.innerText = 'Copied to Clipboard!';
+                setTimeout(() => btn.innerText = 'Copy SQL Code', 2000);
+            });
+        }
+
+        // Initialize on page load
+        renderEmployees();
+        updateOverallSummary();
+        changeLanguage('ur');
+    </script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{
+  "name": "stylish-salon",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Stylish Salon Daily Register & Management Web Portal and Android APK",
+  "scripts": {
+    "build": "echo 'Static build ready'"
+  }
+}
